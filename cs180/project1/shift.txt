@@ -1,0 +1,52 @@
+(4, 25)
+(-4, 58)
+./church.tif
+(24, 49)
+(55, 103)
+./emir.tif
+(16, 59)
+(13, 123)
+./harvesters.tif
+(17, 41)
+(23, 89)
+./icon.tif
+(7, 40)
+(11, 130)
+./ilemselga.tif
+(10, 81)
+(10, 150)
+./melons.tif
+(3, 28)
+(7, 68)
+./religous_painting.tif
+(29, 78)
+(31, 150)
+./self_portrait.tif
+(-6, 49)
+(-25, 95)
+./siren.tif
+(13, 53)
+(11, 112)
+./three_generations.tif
+(3, 3)
+(3, 6)
+./tobolsk.jpg
+(-7, 15)
+(-16, 83)
+./wharf.tif
+(-10, 46)
+(-32, 93)
+./master-pnp-prok-00000-00020u.tif
+(-38, 40)
+(-81, 25)
+./master-pnp-prok-00000-00084u.tif
+(-25, 0)
+(-60, 0)
+./master-pnp-prok-00100-00170u.tif
+(12, 48)
+(30, 115)
+./master-pnp-prok-00200-00217u.tif
+(cs180) yiran@wifi-10-44-68-80 CS180_fa2026_proj1_data % python colorize_skel_loop.py
+(8, -14)
+(2, 32)
+./master-pnp-prok-00400-00476u.tif

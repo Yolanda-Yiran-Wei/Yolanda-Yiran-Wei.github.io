@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 1 — CS180</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 { margin-bottom: 0.25em; }
+        h2 { margin-top: 1.5em; margin-bottom: 0.5em; }
+        h3 { margin-top: 1.25em; margin-bottom: 0.25em; }
+        p { margin: 0.75em 0; }
+
+        pre {
+            background: #f5f5f5;
+            padding: 0.75em 1em;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        a.back-link {
+            display: inline-block;
+            margin-bottom: 1.5em;
+            color: #0066cc;
+        }
+
+        .placeholder {
+            color: #888;
+            font-style: italic;
+            border-left: 3px solid #ddd;
+            padding-left: 1em;
+            margin: 1em 0;
+        }
+
+        .result {
+            margin: 2em 0;
+            padding-bottom: 1.5em;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result:last-child { border-bottom: none; }
+
+        .image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 400px;
+            margin: 0.5em auto;
+        }
+
+        .image-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1em;
+            margin: 1em 0;
+        }
+
+        .image-row .image-item {
+            flex: 1;
+            min-width: 0;
+            max-width: 400px;
+            margin: 0;
+        }
+
+        .part1-row .image-item {
+            max-width: none;
+        }
+
+        .part1-row .img-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            line-height: 0;
+        }
+
+        .part1-row .img-wrap img {
+            height: 320px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .shift {
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #444;
+            text-align: center;
+            margin: 0.5em 0 0;
+        }
+
+        .note {
+            text-align: left;
+            font-size: 0.95em;
+            color: #555;
+            margin: 1em 0 0;
+        }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../../index.html">&larr; Back to portfolio</a>
+
+    <h1>Project 1: Colorizing the Prokudin-Gorskii Photo Collection</h1>
+
+    <h2>Overview</h2>
+    <p>
+        Prokudin-Gorskii took photos across the Russian Empire in the early 20th century. He recorded three exposures of each scene on a glass plate using red, green, and blue filters, hoping that special projectors would be designed so people can see these photos in color. Unfortunately, his dream didn't come true. In this project, I will extract the color channels from digitized versions of these photos to colorize them.
+    </p>
+
+    <h2>Implementation</h2>
+    <p>
+        I split the image into B/G/R channels, and aligned them using the metric normalized cross-correlation (NCC), which is a dot product between two mean-subtracted, normalized vectors:
+    </p>
+    <pre><code>vec1 = (shifted - np.mean(shifted)) / np.linalg.norm(shifted - np.mean(shifted))
+vec2 = (im2 - np.mean(im2)) / np.linalg.norm(im2 - np.mean(im2))
+correlation = np.sum(vec1 * vec2)</code></pre>
+    <p>
+        NCC produces better results than L2 because it is invariant to changes in brightness and contrast, while L2 compares the absolute differences between the two images:
+    </p>
+    <pre><code>distance = np.sqrt(np.sum((shifted - im2) ** 2))</code></pre>
+
+    <h2>Part 1: Single-Scale Alignment (Low-Resolution)</h2>
+    <p>
+        To align the color channels across images, I implemented an algorithm that does an exhausive search over [-15, 15] pixels for the horizontal and vertical shifts. It compares the NCC score between the two images for each shift, and the shift with the highest NCC score is the one that is used to align the images. 
+    </p>
+    <p>
+        I aligned channels g and r to b so all three channels match when I stack them together for colorization. 
+    </p>
+    <p>
+        I also discovered that cropping edges of images helps improve the alignment result. The crop range is set to be 10% of the image height, and I cropped this amount of pixels from the top, bottom, left, and right of the image. I did this instead of set pixels so that images with larger resolution can still be cropped to a reasonable amount of pixels.
+    </p>
+
+    <div class="result">
+        <h3>cathedral.jpg</h3>
+        <div class="image-row part1-row">
+            <div class="image-item">
+                <div class="img-wrap">
+                    <img src="media/cathedral.jpg_ncrop_ncc.jpg" alt="cathedral — without edge crop">
+                </div>
+                <p class="shift">G &rarr; B: (-1, 1) &nbsp;|&nbsp; R &rarr; B: (-1, 7)</p>
+            </div>
+            <div class="image-item">
+                <div class="img-wrap">
+                    <img src="media/cathedral_ncc.jpg" alt="cathedral — single-scale NCC">
+                </div>
+                <p class="shift">G &rarr; B: (2, 5) &nbsp;|&nbsp; R &rarr; B: (3, 12)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>tobolsk.jpg</h3>
+        <div class="image-row part1-row">
+            <div class="image-item">
+                <div class="img-wrap">
+                    <img src="media/tobolsk.jpg_ncrop_ncc.jpg" alt="tobolsk — without edge crop">
+                </div>
+                <p class="shift">G &rarr; B: (2, 3) &nbsp;|&nbsp; R &rarr; B: (3, 6)</p>
+            </div>
+            <div class="image-item">
+                <div class="img-wrap">
+                    <img src="media/tobolsk.jpg_ncc.jpg" alt="tobolsk — single-scale NCC">
+                </div>
+                <p class="shift">G &rarr; B: (3, 3) &nbsp;|&nbsp; R &rarr; B: (3, 6)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>monastery.jpg</h3>
+        <div class="image-row part1-row">
+            <div class="image-item">
+                <div class="img-wrap">
+                    <img src="media/monastery.jpg_ncrop_ncc.jpg" alt="monastery — without edge crop">
+                </div>
+                <p class="shift">G &rarr; B: (0, -6) &nbsp;|&nbsp; R &rarr; B: (1, 9)</p>
+            </div>
+            <div class="image-item">
+                <div class="img-wrap">
+                    <img src="media/monastery_ncc.jpg" alt="monastery — single-scale NCC">
+                </div>
+                <p class="shift">G &rarr; B: (2, -3) &nbsp;|&nbsp; R &rarr; B: (2, 3)</p>
+            </div>
+        </div>
+    </div>
+
+    <p class="note">Without cropping the edges of images, the algorithm might take into account the value differences happening on the edges of each channel, and produce inaccurate alignment, as shown in the monastery image.</p>
+
+    <h2>Part 2: Multi-Scale Pyramid Alignment (NCC)</h2>
+    <p>
+        For images with more pixels, an exhaustive search over a displacement window of
+        [&#8722;15, 15] is not enough to find the optimal shift, but increasing the
+        search to something like [&#8722;50, 50] would take too much time, so I implemented a pyramid approach. 
+    </p>
+    <p>
+        For the most basic case, each image would be downsampled by a factor of 2, and the optimal shift would be computed for the downsampled image. This would give a coarse approximation of the shift. After that, the shift would be multiplied by 2 and applied to the original image. The algorithm would then determine the optimal shift for the original image (which was already shifted by the coarse approximation). 
+    </p>
+    <p>
+        I started with a search range of [-10, 10] pixels and search level of 4, which means I would recursively downsample and shift the image 4 times, then upsample and shift the image 4 times. Most images turned out to be correctly aligned in a few seconds, and for images that didn't align well, I changed the search range and search level to get better results. 
+    </p>
+    <p>
+        All results below use multi-scale (pyramid) NCC.
+    </p>
+
+    <div class="result">
+        <h3>cathedral.jpg</h3>
+        <div class="image-item">
+            <img src="media/cathedral_multi_ncc.jpg" alt="cathedral">
+            <p class="shift">G &rarr; B: (2, 5) &nbsp;|&nbsp; R &rarr; B: (3, 12)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>tobolsk.jpg</h3>
+        <div class="image-item">
+            <img src="media/tobolsk.jpgmulti_ncc.jpg" alt="tobolsk">
+            <p class="shift">G &rarr; B: (3, 3) &nbsp;|&nbsp; R &rarr; B: (3, 6)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>monastery.jpg</h3>
+        <div class="image-item">
+            <img src="media/monastery_ncc.jpg" alt="monastery">
+            <p class="shift">G &rarr; B: (2, -3) &nbsp;|&nbsp; R &rarr; B: (2, 3)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>church.tif</h3>
+        <div class="image-item">
+            <img src="media/church.tifmulti_ncc.jpg" alt="church">
+            <p class="shift">G &rarr; B: (4, 25) &nbsp;|&nbsp; R &rarr; B: (-4, 58)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>harvesters.tif</h3>
+        <div class="image-item">
+            <img src="media/harvesters.tifmulti_ncc.jpg" alt="harvesters">
+            <p class="shift">G &rarr; B: (16, 59) &nbsp;|&nbsp; R &rarr; B: (13, 123)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>icon.tif</h3>
+        <div class="image-item">
+            <img src="media/icon.tifmulti_ncc.jpg" alt="icon">
+            <p class="shift">G &rarr; B: (17, 41) &nbsp;|&nbsp; R &rarr; B: (23, 89)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>ilemselga.tif</h3>
+        <div class="image-item">
+            <img src="media/ilemselga.tifmulti_ncc.jpg" alt="ilemselga">
+            <p class="shift">G &rarr; B: (7, 40) &nbsp;|&nbsp; R &rarr; B: (11, 130)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>religous_painting.tif</h3>
+        <div class="image-item">
+            <img src="media/religous_painting.tifmulti_ncc.jpg" alt="religous painting">
+            <p class="shift">G &rarr; B: (3, 28) &nbsp;|&nbsp; R &rarr; B: (7, 68)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>siren.tif</h3>
+        <div class="image-item">
+            <img src="media/siren.tifmulti_ncc.jpg" alt="siren">
+            <p class="shift">G &rarr; B: (-6, 49) &nbsp;|&nbsp; R &rarr; B: (-25, 95)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>three_generations.tif</h3>
+        <div class="image-item">
+            <img src="media/three_generations.tifmulti_ncc.jpg" alt="three generations">
+            <p class="shift">G &rarr; B: (13, 53) &nbsp;|&nbsp; R &rarr; B: (11, 112)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>wharf.tif</h3>
+        <div class="image-item">
+            <img src="media/wharf.tifmulti_ncc.jpg" alt="wharf">
+            <p class="shift">G &rarr; B: (-7, 15) &nbsp;|&nbsp; R &rarr; B: (-16, 83)</p>
+        </div>
+    </div>
+
+    <p class="note">For the images melons.tif and self_portrait.tif, search range = 10 and search level = 4 make the maximum vertical shift get stuck at 150 for R &rarr; B, so I changed the parameters to range = 8 and level = 6, so larger shifts can be explored without taking too much more time.</p>
+
+    <div class="result">
+        <h3>melons.tif</h3>
+        <div class="image-row">
+            <div class="image-item">
+                <img src="media/melons.tifmulti_ncc.jpg" alt="melons — range 10, level 4">
+                <p class="shift">G &rarr; B: (10, 81) &nbsp;|&nbsp; R &rarr; B: (10, 150)</p>
+            </div>
+            <div class="image-item">
+                <img src="media/melons.tif_ncrop_ncc_86.jpg" alt="melons — range 8, level 6">
+                <p class="shift">G &rarr; B: (10, 81) &nbsp;|&nbsp; R &rarr; B: (13, 178)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>self_portrait.tif</h3>
+        <div class="image-row">
+            <div class="image-item">
+                <img src="media/self_portrait.tifmulti_ncc.jpg" alt="self portrait — range 10, level 4">
+                <p class="shift">G &rarr; B: (29, 78) &nbsp;|&nbsp; R &rarr; B: (31, 150)</p>
+            </div>
+            <div class="image-item">
+                <img src="media/self_portrait.tif_ncrop_ncc_86.jpg" alt="self portrait — range 8, level 6">
+                <p class="shift">G &rarr; B: (29, 78) &nbsp;|&nbsp; R &rarr; B: (37, 176)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>emir.tif</h3>
+        <div class="image-item">
+            <img src="media/emir.tifmulti_ncc.jpg" alt="emir">
+            <p class="shift">G &rarr; B: (24, 49) &nbsp;|&nbsp; R &rarr; B: (55, 103)</p>
+        </div>
+    </div>
+
+    <h2>Part 3: Additional Images from the Collection</h2>
+    <p>
+        In addition to the images used in Part 2, I also aligned the following images from the collection.
+    </p>
+
+    <div class="result">
+        <h3>Display of embroidered cloth and woven sashes</h3>
+        <div class="image-item">
+            <img src="media/master-pnp-prok-00000-00020u.tifmulti_ncc.jpg" alt="master-pnp-prok-00000-00020u">
+            <p class="shift">G &rarr; B: (-10, 46) &nbsp;|&nbsp; R &rarr; B: (-32, 93)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>Biological specimens, beans and/or seeds, in display case</h3>
+        <div class="image-item">
+            <img src="media/master-pnp-prok-00000-00084u.tif_ncrop_ncc.jpg" alt="Biological specimens, beans and/or seeds, in display case">
+            <p class="shift">G &rarr; B: (-38, 40) &nbsp;|&nbsp; R &rarr; B: (-81, 25)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>Saint Mark's Cathedral, Venice</h3>
+        <div class="image-item">
+            <img src="media/master-pnp-prok-00200-00217u.tifmulti_ncc.jpg" alt="master-pnp-prok-00200-00217u">
+            <p class="shift">G &rarr; B: (12, 48) &nbsp;|&nbsp; R &rarr; B: (30, 115)</p>
+        </div>
+    </div>
+
+    <div class="result">
+        <h3>Plaque commemorating foundation of Yekaterinburg</h3>
+        <div class="image-item">
+            <img src="media/master-pnp-prok-00400-00476u.tifmulti_ncc.jpg" alt="master-pnp-prok-00400-00476u">
+            <p class="shift">G &rarr; B: (8, -14) &nbsp;|&nbsp; R &rarr; B: (2, 32)</p>
+        </div>
+    </div>
+
+</body>
+</html>
