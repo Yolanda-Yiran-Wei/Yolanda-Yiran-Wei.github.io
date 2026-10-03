@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 2 — CS180</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 { margin-bottom: 0.25em; }
+        h2 { margin-top: 1.75em; margin-bottom: 0.5em; }
+        h3 { margin-top: 1.25em; margin-bottom: 0.25em; }
+        h4 { margin-top: 1em; margin-bottom: 0.25em; }
+        p { margin: 0.75em 0; }
+
+        pre {
+            background: #f5f5f5;
+            padding: 0.75em 1em;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        a.back-link {
+            display: inline-block;
+            margin-bottom: 1.5em;
+            color: #0066cc;
+        }
+
+        .placeholder {
+            color: #888;
+            font-style: italic;
+            border-left: 3px solid #ddd;
+            padding-left: 1em;
+            margin: 1em 0;
+        }
+
+        .caption {
+            font-size: 0.85em;
+            color: #555;
+            text-align: center;
+            margin: 0.35em 0 0;
+        }
+
+        .image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 280px;
+            margin: 0.5em auto;
+        }
+
+        .image-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75em;
+            margin: 1em 0;
+        }
+
+        .image-row .image-item {
+            flex: 1 1 160px;
+            min-width: 0;
+            max-width: 280px;
+            margin: 0;
+        }
+
+        .stack-row {
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            overflow-x: auto;
+            gap: 0.4em;
+        }
+
+        .stack-row .image-item {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: none;
+        }
+
+        .stack-row img {
+            width: 100%;
+            height: 110px;
+            object-fit: contain;
+        }
+
+        .note {
+            font-size: 0.95em;
+            color: #555;
+            margin: 1em 0;
+        }
+
+        .one-line {
+            flex-wrap: nowrap;
+        }
+
+        .one-line .image-item {
+            flex: 1 1 0;
+            max-width: none;
+        }
+
+        .dog-row .image-item {
+            flex: 1 1 0;
+            max-width: none;
+        }
+
+        .dog-row img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        .hybrid-row .image-item {
+            flex: 1 1 0;
+            max-width: none;
+        }
+
+        .hybrid-row img {
+            width: 100%;
+            height: 220px;
+            object-fit: contain;
+        }
+
+        .blend-row {
+            flex-wrap: nowrap;
+            justify-content: space-evenly;
+            align-items: flex-start;
+            gap: 0.5em;
+        }
+
+        .blend-row .image-item {
+            flex: 1 1 0;
+            max-width: none;
+            margin: 0;
+        }
+
+        .blend-row img {
+            height: 240px;
+            width: auto;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .filter-matrix {
+            font-family: monospace;
+            font-size: 0.9em;
+            background: #f5f5f5;
+            padding: 0.75em 1em;
+            margin: 0.5em 0 1em;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .filter-label {
+            margin: 0.75em 0 0.25em;
+            font-weight: bold;
+        }
+
+        .reflect-sharpen-row img {
+            height: 240px;
+            width: auto;
+            max-width: 100%;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../../index.html">&larr; Back to portfolio</a>
+
+    <h1>Project 2: Fun with Filters and Frequencies</h1>
+
+    <h2>Overview</h2>
+    <p>
+        In Part 1 of this project, I explored with writing convolution from scratch, finite difference operators, and the derivative of Gaussian filter. In Part 2, I implemented image sharpening, hybrid images, and multiresolution blending.
+    </p>
+
+    <!-- ===================== PART 1 ===================== -->
+    <h2>Part 1: Fun with Filters</h2>
+
+    <h3>Part 1.1: Convolutions from Scratch</h3>
+    <p>
+        I implemented convolution using NumPy and matrix multiplication, as shown in the code below. The first function uses 4 for-loops, and it computes the value of each pixel in the output image by multiplying the filter and the input image pixel by pixel and summing the results. The second function uses 2 for-loops, and it computes the values of the output image by doing matrix multiplication between the filter and the padded input image. 
+    </p>
+
+    <p>Before implementing the convolution, I padded the image with zeros around the edges to handle the boundaries of the image. I also flipped the filter, so that the function does convolution instead of correlation. The 2-loop convolution is faster than the 4-loop convolution because matrix multiplication is more efficient than multiplying each pixel by each element of the filter. I compared my convolution functions with the <code>scipy.signal.convolve2d</code> function, and they produce the same results.</p>
+
+    <pre><code>def convolve(img, filter): 
+    img_height = img.shape[0] + 2
+    img_width = img.shape[1] + 2
+    
+    # padding w zero fill values
+    padded = np.zeros((img_height, img_width))
+    padded[1:img_height-1, 1:img_width-1] = img
+    
+    fil_height = filter.shape[0]
+    fil_width = filter.shape[1]
+    
+    filter = np.flip(filter)
+    
+    result = np.zeros((img_height-fil_height+1, img_width-fil_width+1))
+    
+    for h1 in range(img_height-fil_height+1):
+        for w1 in range(img_width-fil_width+1):
+            for h2 in range(fil_height):
+                for w2 in range(fil_width):
+                    result[h1, w1] += filter[h2, w2] * padded[h1+h2, w1+w2]
+    
+    return result
+        
+def convolve_2(img, filter):
+    # same variables and padding as above
+    result = np.zeros((img.shape[0], img.shape[1]))
+        
+    for h1 in range(img_height):
+        for w1 in range(img_width):
+            result[h1, w1] = filter @ padded[h1:h1+fil_height, w1:w1+fil_width]
+    
+    return result
+
+</code></pre>
+
+    <p>I applied a 9×9 box-style filter and the finite difference operators <code>Dx</code> / <code>Dy</code> to a grayscale photo of myself using my 2-loop convolution.</p>
+    <p>Here are the box filter, Dx, and Dy operators I used. The Dx operator detects edges in the horizontal direction, and the Dy operator detects edges in the vertical direction. The combined Dx and Dy operator detects edges in both directions.</p>
+
+    <p class="filter-label">Box filter</p>
+    <pre class="filter-matrix"><code>np.array([
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 0, 1, 1, 0, 1, 1],
+])</code></pre>
+
+    <p class="filter-label">D<sub>x</sub> (horizontal derivative)</p>
+    <pre class="filter-matrix"><code>np.array([
+    [1, 0, -1],
+])</code></pre>
+
+    <p class="filter-label">D<sub>y</sub> (vertical derivative)</p>
+    <pre class="filter-matrix"><code>np.array([
+    [1],
+    [0],
+    [-1],
+])</code></pre>
+
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/me.jpg" alt="Original selfie">
+            <p class="caption">Original</p>
+        </div>
+        <div class="image-item">
+            <img src="media/me.jpg_loop2_boxfilter.jpg" alt="Box filter">
+            <p class="caption">Box filter (2-loop)</p>
+        </div>
+        <div class="image-item">
+            <img src="media/me_loop2_dx.jpg" alt="Dx with 2-loop">
+            <p class="caption">Dx</p>
+        </div>
+        <div class="image-item">
+            <img src="media/me_loop2_dy.jpg" alt="Dy with 2-loop">
+            <p class="caption">Dy</p>
+        </div>
+        <div class="image-item">
+            <img src="media/me_loop2.jpg" alt="Combined Dx and Dy">
+            <p class="caption">Combined Dx + Dy</p>
+        </div>
+    </div>
+
+    <h3>Part 1.2: Finite Difference Operator</h3>
+    <p>
+        I convolved the cameraman image with the finite difference operators <code>Dx</code> and <code>Dy</code>. I computed the gradient magnitude of the image by <code>np.sqrt(result_d_x ** 2 + result_d_y ** 2)</code>. I then binarized the gradient magnitude image to create an edge map by setting pixels greater than a threshold to white and the other pixels to black. If the threshold is too low, the edge map will be too noisy. If the threshold is too high, the edge map will be too sparse. I chose a threshold of 70 for the edge map.
+    </p>
+
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/cameraman.png" alt="Cameraman original">
+            <p class="caption">Original cameraman</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_dx.jpg" alt="Partial derivative dx">
+            <p class="caption">∂/∂x</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_dy.jpg" alt="Partial derivative dy">
+            <p class="caption">∂/∂y</p>
+        </div>
+        <div class="image-item">
+            <img src="media/gradient_mag.jpg" alt="Gradient magnitude">
+            <p class="caption">Gradient magnitude</p>
+        </div>
+    </div>
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/cameraman_binary_30.jpg" alt="Binarized edges threshold 30">
+            <p class="caption">Binarized edges (threshold = 30)</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_binary_50.jpg" alt="Binarized edges threshold 50">
+            <p class="caption">Binarized edges (threshold = 50)</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_binary.jpg" alt="Binarized edges threshold 70">
+            <p class="caption">Chosen: threshold = 70</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_binary_90.jpg" alt="Binarized edges threshold 90">
+            <p class="caption">Binarized edges (threshold = 90)</p>
+        </div>
+    </div>
+
+    <h3>Part 1.3: Derivative of Gaussian (DoG) Filter</h3>
+    <p>
+        I created a 2D Gaussian filter by using <code>cv2.getGaussianKernel()</code> to create a 1D kernel and then taking the outer product with its transpose. I convolved the image with the Gaussian filter to create a blurred image. I then convolved the blurred image with the finite difference operators <code>Dx</code> and <code>Dy</code> to create the gradient magnitude image. This produces an edge image with less noise, but the thresholds need to be adjusted. I also did the same thing with a single convolution by creating a Derivative of Gaussian (DoG) filters.
+    </p>
+
+    <h4>Gaussian blur, then finite differences</h4>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/cameraman_blurred.jpg" alt="Blurred cameraman">
+            <p class="caption">Gaussian-blurred</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_blur_dx.jpg" alt="Blurred dx">
+            <p class="caption">Blurred ∂/∂x</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_blur_dy.jpg" alt="Blurred dy">
+            <p class="caption">Blurred ∂/∂y</p>
+        </div>
+        <div class="image-item">
+            <img src="media/gradient_mag_blur.jpg" alt="Blurred gradient magnitude">
+            <p class="caption">Gradient magnitude (blurred)</p>
+        </div>
+    </div>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/cameraman_binary_blur_20.jpg" alt="Binary blur threshold 20">
+            <p class="caption">Edges, threshold = 20</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_binary_blur_30.jpg" alt="Binary blur threshold 30">
+            <p class="caption">Edges, threshold = 30</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_binary_blur_40.jpg" alt="Binary blur threshold 40">
+            <p class="caption">Edges, threshold = 40</p>
+        </div>
+    </div>
+
+    <h4>DoG filters (single convolution)</h4>
+    <div class="image-row dog-row">
+        <div class="image-item">
+            <img src="media/cameraman_d_x_gauss.jpg" alt="DoG Dx kernel">
+            <p class="caption">DoG filter Dx * G</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_d_y_gauss.jpg" alt="DoG Dy kernel">
+            <p class="caption">DoG filter Dy * G</p>
+        </div>
+        <div class="image-item">
+            <img src="media/cameraman_blurred_edge.jpg" alt="DoG edge result">
+            <p class="caption">Gradient magnitude via DoG</p>
+        </div>
+    </div>
+
+    <!-- ===================== PART 2 ===================== -->
+    <h2>Part 2: Fun with Frequencies</h2>
+
+    <h3>Part 2.1: Image Sharpening</h3>
+    <p>
+        In this part, I implemented the unsharp mask filter. I blurred the image with a Gaussian filter to retain the low frequencies. Then, I subtracted the blurred image from the original image to get the high frequencies. I added a multiple of the high frequencies to the original image to sharpen the image.
+    </p>
+
+    <pre><code>blurred = scipy.signal.convolve2d(img, gaussian)
+details = img - blurred          # high frequencies
+sharpened = img + alpha * details</code></pre>
+
+    <h4>Taj Mahal</h4>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/taj.jpg" alt="Taj original">
+            <p class="caption">Original</p>
+        </div>
+        <div class="image-item">
+            <img src="media/taj_details.jpg" alt="Taj high frequencies">
+            <p class="caption">High frequencies</p>
+        </div>
+    </div>
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/taj_sharpened_point3.jpg" alt="Sharpened alpha 0.3">
+            <p class="caption">Sharpened, α = 0.3</p>
+        </div>
+        <div class="image-item">
+            <img src="media/taj_sharpened_point6.jpg" alt="Sharpened alpha 0.6">
+            <p class="caption">Sharpened, α = 0.6</p>
+        </div>
+        <div class="image-item">
+            <img src="media/taj_sharpened_point9.jpg" alt="Sharpened alpha 0.9">
+            <p class="caption">Sharpened, α = 0.9</p>
+        </div>
+        <div class="image-item">
+            <img src="media/taj_sharpened_3.jpg" alt="Sharpened alpha 3">
+            <p class="caption">Sharpened, α = 3</p>
+        </div>
+        <div class="image-item">
+            <img src="media/taj_sharpened_5.jpg" alt="Sharpened alpha 5">
+            <p class="caption">Sharpened, α = 5</p>
+        </div>
+    </div>
+
+    <h4>Blur then re-sharpen with another image</h4>
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region.jpeg" alt="Original small region">
+            <p class="caption">Original</p>
+        </div>
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region_blurred.jpg" alt="Blurred small region">
+            <p class="caption">Blurred</p>
+        </div>
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region_details.jpg" alt="High frequencies">
+            <p class="caption">High frequencies</p>
+        </div>
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region_sharpened_1.jpg" alt="Resharpened alpha 1">
+            <p class="caption">Resharpened, α = 1</p>
+        </div>
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region_sharpened_3.jpg" alt="Resharpened alpha 3">
+            <p class="caption">Resharpened, α = 3</p>
+        </div>
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region_sharpened_10.jpg" alt="Resharpened alpha 10">
+            <p class="caption">Resharpened, α = 10</p>
+        </div>
+    </div>
+    <p>The re-sharpened image has clearer edges than the blurred image, but it cannot recover the original image perfectly, since the high frequency details are already lost in the blurring process.</p>
+
+    <h3>Part 2.2: Hybrid Images</h3>
+    <p>
+        I aligned two images by choosing points like eyes or object edges. I implemented hybrid images by filtering image 1 with a Gaussian filter to get the low frequencies and an impulse filter subtracted by a Gaussian filter for image 2 to get the high frequencies. I combined the low and high frequencies of the two images to get the hybrid image. I used a kernel size of 31 and sigma of 5 and 6 for cutoff frequencies respectively for the filters.
+    </p>
+
+    <h4>Hello Kitty + Mummy (with frequency analysis)</h4>
+    <p> Here I combined the images of Hello Kitty and a mummy statue, and decided to name the results "Mummy Kitty" and "Hello Mummy". I also performed frequency analysis on the images by showing the log magnitude of the Fourier transform of the input images, the filtered image, and the hybrid image for the Mummy Kitty.</p>
+    <div class="image-row hybrid-row">
+        <div class="image-item">
+            <img src="media/hellokitty.jpg" alt="Hello Kitty">
+            <p class="caption">Hello Kitty</p>
+        </div>
+        <div class="image-item">
+            <img src="media/IMG_6013.jpeg" alt="Mummy">
+            <p class="caption">Mummy</p>
+        </div>
+        <div class="image-item">
+            <img src="media/mummy_kitty.jpg" alt="Hybrid mummy kitty">
+            <p class="caption">Hybrid: mummy_kitty</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hello_mummy.jpg" alt="Hybrid with high/low swapped">
+            <p class="caption">Hybrid with high/low swapped: hello_mummy</p>
+        </div>
+    </div>
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/fourier/im1_fft.jpg" alt="FFT of image 1">
+            <p class="caption">log |FFT| of image 1</p>
+        </div>
+        <div class="image-item">
+            <img src="media/fourier/im1_high_fft.jpg" alt="High-pass FFT">
+            <p class="caption">High-pass FFT</p>
+        </div>
+        <div class="image-item">
+            <img src="media/fourier/im2_fft.jpg" alt="FFT of image 2">
+            <p class="caption">log |FFT| of image 2</p>
+        </div>
+        <div class="image-item">
+            <img src="media/fourier/im2_low_fft.jpg" alt="Low-pass FFT">
+            <p class="caption">Low-pass FFT</p>
+        </div>
+        <div class="image-item">
+            <img src="media/fourier/hybrid_fft.jpg" alt="FFT of hybrid image">
+            <p class="caption">log |FFT| of hybrid image</p>
+        </div>
+    </div>
+
+    <h4>Dumpling + Flower</h4>
+    <div class="image-row hybrid-row">
+        <div class="image-item">
+            <img src="media/IMG_5617.jpeg" alt="Dumpling">
+            <p class="caption">Dumpling soup from Momo Masalas</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hybrid/IMG_5747.jpg" alt="Flower">
+            <p class="caption">Flower from Trader Joe's</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hybrid/dumpling_flower.jpg" alt="Dumpling flower hybrid">
+            <p class="caption">Hybrid: dumpling_flower</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hybrid/flower_soup.jpg" alt="Flower soup hybrid swapped">
+            <p class="caption">Hybrid with high/low swapped (flower_soup)</p>
+        </div>
+    </div>
+
+    <h4>Bell + Legs</h4>
+    <p> Here I combined the images of a bell from a Chinese museum, and a pair of suspicious-looking legs from a Christmas tree in Cafe 3 from 2025.</p>
+    <div class="image-row hybrid-row">
+        <div class="image-item">
+            <img src="media/hybrid/IMG_4038.jpeg" alt="Bell">
+            <p class="caption">Bell</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hybrid/IMG_3831.jpeg" alt="Legs">
+            <p class="caption">Legs</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hybrid/bell_legs.jpg" alt="Bell legs hybrid">
+            <p class="caption">Hybrid: bell_legs</p>
+        </div>
+        <div class="image-item">
+            <img src="media/hybrid/legs_bell.jpg" alt="Legs bell hybrid swapped">
+            <p class="caption">Hybrid with high/low swapped (legs_bell)</p>
+        </div>
+    </div>
+
+    <h3>Part 2.3: Gaussian and Laplacian Stacks</h3>
+    <p>
+        In this part, I implemented Gaussian and Laplacian stacks. I used a Gaussian filter iteratively to blur the image and create a Gaussian stack. From the Gaussian stack, I did <code>gaussian_stack[i] - gaussian_stack[i+1]</code> to get the Laplacian stack.
+    </p>
+
+    <h4>Apple — Gaussian stack</h4>
+    <div class="image-row stack-row">
+        <div class="image-item"><img src="media/stacks/apple_gauss0.jpg" alt="apple gauss0"><p class="caption">G0</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss1.jpg" alt="apple gauss1"><p class="caption">G1</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss2.jpg" alt="apple gauss2"><p class="caption">G2</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss3.jpg" alt="apple gauss3"><p class="caption">G3</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss4.jpg" alt="apple gauss4"><p class="caption">G4</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss5.jpg" alt="apple gauss5"><p class="caption">G5</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss6.jpg" alt="apple gauss6"><p class="caption">G6</p></div>
+    </div>
+
+    <h4>Apple — Laplacian stack</h4>
+    <div class="image-row stack-row">
+        <div class="image-item"><img src="media/stacks/apple_lap0.jpg" alt="apple lap0"><p class="caption">L0</p></div>
+        <div class="image-item"><img src="media/stacks/apple_lap1.jpg" alt="apple lap1"><p class="caption">L1</p></div>
+        <div class="image-item"><img src="media/stacks/apple_lap2.jpg" alt="apple lap2"><p class="caption">L2</p></div>
+        <div class="image-item"><img src="media/stacks/apple_lap3.jpg" alt="apple lap3"><p class="caption">L3</p></div>
+        <div class="image-item"><img src="media/stacks/apple_lap4.jpg" alt="apple lap4"><p class="caption">L4</p></div>
+        <div class="image-item"><img src="media/stacks/apple_lap5.jpg" alt="apple lap5"><p class="caption">L5</p></div>
+        <div class="image-item"><img src="media/stacks/apple_gauss6.jpg" alt="apple gauss6"><p class="caption">G6</p></div>
+    </div>
+
+    <h4>Orange — Gaussian stack</h4>
+    <div class="image-row stack-row">
+        <div class="image-item"><img src="media/stacks/orange_gauss0.jpg" alt="orange gauss0"><p class="caption">G0</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss1.jpg" alt="orange gauss1"><p class="caption">G1</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss2.jpg" alt="orange gauss2"><p class="caption">G2</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss3.jpg" alt="orange gauss3"><p class="caption">G3</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss4.jpg" alt="orange gauss4"><p class="caption">G4</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss5.jpg" alt="orange gauss5"><p class="caption">G5</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss6.jpg" alt="orange gauss6"><p class="caption">G6</p></div>
+    </div>
+
+    <h4>Orange — Laplacian stack</h4>
+    <div class="image-row stack-row">
+        <div class="image-item"><img src="media/stacks/orange_lap0.jpg" alt="orange lap0"><p class="caption">L0</p></div>
+        <div class="image-item"><img src="media/stacks/orange_lap1.jpg" alt="orange lap1"><p class="caption">L1</p></div>
+        <div class="image-item"><img src="media/stacks/orange_lap2.jpg" alt="orange lap2"><p class="caption">L2</p></div>
+        <div class="image-item"><img src="media/stacks/orange_lap3.jpg" alt="orange lap3"><p class="caption">L3</p></div>
+        <div class="image-item"><img src="media/stacks/orange_lap4.jpg" alt="orange lap4"><p class="caption">L4</p></div>
+        <div class="image-item"><img src="media/stacks/orange_lap5.jpg" alt="orange lap5"><p class="caption">L5</p></div>
+        <div class="image-item"><img src="media/stacks/orange_gauss6.jpg" alt="orange gauss6"><p class="caption">G6</p></div>
+    </div>
+
+    <h3>Part 2.4: Multiresolution Blending</h3>
+    <p>
+        To blend two images together, I created a mask by applying the Gaussian stack to a step function <code>(...0, 0, 1, 1, ...)</code>. I used the Laplacian stack of one image and multiplied it by the mask (and the Laplacian stack of the other image and multiplied it by <code>1 - mask</code>) to blend the images. I then reconstructed the image by adding the Laplacian stacks of these together.
+    </p>
+
+    <h4>The Oraple (vertical seam)</h4>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/apple.jpg" alt="Apple">
+            <p class="caption">Apple</p>
+        </div>
+        <div class="image-item">
+            <img src="media/orange.jpg" alt="Orange">
+            <p class="caption">Orange</p>
+        </div>
+    </div>
+    <div class="image-row stack-row">
+        <div class="image-item"><img src="media/blended0.jpg" alt="Blended Laplacian 0"><p class="caption">Blended L0</p></div>
+        <div class="image-item"><img src="media/blended1.jpg" alt="Blended Laplacian 1"><p class="caption">Blended L1</p></div>
+        <div class="image-item"><img src="media/blended2.jpg" alt="Blended Laplacian 2"><p class="caption">Blended L2</p></div>
+        <div class="image-item"><img src="media/blended3.jpg" alt="Blended Laplacian 3"><p class="caption">Blended L3</p></div>
+        <div class="image-item"><img src="media/blended4.jpg" alt="Blended Laplacian 4"><p class="caption">Blended L4</p></div>
+        <div class="image-item"><img src="media/blended5.jpg" alt="Blended Laplacian 5"><p class="caption">Blended L5</p></div>
+        <div class="image-item"><img src="media/blended6.jpg" alt="Blended Laplacian 6"><p class="caption">Blended L6 / G</p></div>
+    </div>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/oraple.jpg" alt="Oraple blend">
+            <p class="caption">Oraple blend</p>
+        </div>
+    </div>
+
+    <h4>Alligator + Soup</h4>
+    <p> I combined the image of the alligator hash dish (real alligator meat by the way) from Angeline's Lousiana Kitchen and the dumpling soup from Momo Masalas. The mask below is the last image from the Gaussian stack of the mask.</p>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/IMG_5463.jpeg" alt="Food blend input 1">
+            <p class="caption">Alligator Hash</p>
+        </div>
+        <div class="image-item">
+            <img src="media/IMG_5617.jpeg" alt="Food input 2">
+            <p class="caption">Dumpling Soup</p>
+        </div>
+        <div class="image-item">
+            <img src="media/app_mask_gauss.jpg" alt="Alligator soup mask">
+            <p class="caption">Mask</p>
+        </div>
+        <div class="image-item">
+            <img src="media/alligatorsoup_final.jpg" alt="Alligator soup blend">
+            <p class="caption">Blend result</p>
+        </div>
+    </div>
+
+    <h4>Plane + Car</h4>
+    <p> Here are one image of a plane to San Francisco, and another image of the sunset on my way back home. What if people look out of the plane window and see another car driving on the highway? Maybe this is year 2035?</p>
+    <p> I created the mask by aligning the two images and clicking on 10 points on the edge of the plane window so the car and sunset view can fit inside perfectly.</p>
+    <div class="image-row blend-row">
+        <div class="image-item">
+            <img src="media/plane.jpeg" alt="Plane">
+            <p class="caption">Plane</p>
+        </div>
+        <div class="image-item">
+            <img src="media/car.jpeg" alt="Car">
+            <p class="caption">Car and sunset</p>
+        </div>
+        <div class="image-item">
+            <img src="media/car_mask.jpg" alt="Car mask">
+            <p class="caption">Mask</p>
+        </div>
+        <div class="image-item">
+            <img src="media/flyingnexttocar.jpg" alt="Plane car blend">
+            <p class="caption">Blend result</p>
+        </div>
+    </div>
+    <div class="image-row stack-row">
+        <div class="image-item"><img src="media/view_laplacian/view_blended0.jpg" alt="Plane car blended Laplacian 0"><p class="caption">Blended L0</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended1.jpg" alt="Plane car blended Laplacian 1"><p class="caption">Blended L1</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended2.jpg" alt="Plane car blended Laplacian 2"><p class="caption">Blended L2</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended3.jpg" alt="Plane car blended Laplacian 3"><p class="caption">Blended L3</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended4.jpg" alt="Plane car blended Laplacian 4"><p class="caption">Blended L4</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended5.jpg" alt="Plane car blended Laplacian 5"><p class="caption">Blended L5</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended6.jpg" alt="Plane car blended Laplacian 6"><p class="caption">Blended L6</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended7.jpg" alt="Plane car blended Laplacian 7"><p class="caption">Blended L7</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended8.jpg" alt="Plane car blended Laplacian 8"><p class="caption">Blended L8</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended9.jpg" alt="Plane car blended Laplacian 9"><p class="caption">Blended L9</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended10.jpg" alt="Plane car blended Laplacian 10"><p class="caption">Blended L10</p></div>
+        <div class="image-item"><img src="media/view_laplacian/view_blended11.jpg" alt="Plane car blended Laplacian 11"><p class="caption">Blended L11 / G</p></div>
+    </div>
+
+    <h4>Bottles + Artifact</h4>
+    <p> I combined the image of a cute creature statue from a Chinese museum, and a tower of bottles, boxes and a glue stick (?) that my younger brother built on our kitchen table.</p>
+    <div class="image-row blend-row">
+        <div class="image-item">
+            <img src="media/IMG_4038.jpeg" alt="Bottle source IMG_4038">
+            <p class="caption">Statue</p>
+        </div>
+        <div class="image-item">
+            <img src="media/IMG_3991.jpeg" alt="Bottle source IMG_3991">
+            <p class="caption">Bottles tower</p>
+        </div>
+        <div class="image-item">
+            <img src="media/artifact_mask.jpg" alt="Bottle artifact mask">
+            <p class="caption">Mask</p>
+        </div>
+        <div class="image-item">
+            <img src="media/bottle_artifact.jpg" alt="Bottle blend">
+            <p class="caption">Blend result</p>
+        </div>
+    </div>
+    <p>Since the image alignment code cuts off the image when they are different sizes, I overlaid the blend result onto the orignal image to show what it would look like with the little creature's whole body.</p>
+    <div class="image-row">
+        <div class="image-item">
+            <img src="media/bottle_artifact_full.jpg" alt="Bottle full">
+            <p class="caption">Artifact blend (full)</p>
+        </div>
+    </div>
+
+    <h2>Reflection</h2>
+    <p>I learnt that it is important to normalize images before saving or showing them, and cv2 and matplotlib also has different ways of storing images and also different orders for the rgb channels. When images are not stored correctly, I get these results for the apple Laplacian stack even though the Gaussian stack looks correct: (honestly, these apples are really cool and are pieces of Abstract Art)</p>
+    <div class="image-row one-line">
+        <div class="image-item">
+            <img src="media/interesting/apple_lap0.jpg" alt="apple_lap0">
+            <p class="caption">L0</p>
+        </div>
+        <div class="image-item">
+            <img src="media/interesting/apple_lap0%202.jpg" alt="apple_lap0 2">
+            <p class="caption">L0 (2)</p>
+        </div>
+        <div class="image-item">
+            <img src="media/interesting/apple_lap1.jpg" alt="apple_lap1">
+            <p class="caption">L1</p>
+        </div>
+        <div class="image-item">
+            <img src="media/interesting/apple_lap1%202.jpg" alt="apple_lap1 2">
+            <p class="caption">L1 (2)</p>
+        </div>
+        <div class="image-item">
+            <img src="media/interesting/apple_lap2.jpg" alt="apple_lap2">
+            <p class="caption">L2</p>
+        </div>
+        <div class="image-item">
+            <img src="media/interesting/apple_lap2%202.jpg" alt="apple_lap2 2">
+            <p class="caption">L2 (2)</p>
+        </div>
+    </div>
+
+    <p>I also found out that when alpha is too high for sharpening images, the image also becomes quite artistic (although part of the reason is probably also differences between cv2 and matplotlib and also normalization).</p>
+    <div class="image-row one-line reflect-sharpen-row">
+        <div class="image-item">
+            <img src="media/taj_sharpened_100.jpg" alt="Taj sharpened alpha 100">
+            <p class="caption">Taj sharpened, α = 100</p>
+        </div>
+        <div class="image-item">
+            <img src="media/blur_sharpen/small_region_sharpened_100.jpg" alt="Small region sharpened alpha 100">
+            <p class="caption">Car view sharpened, α = 100</p>
+        </div>
+    </div>
+
+</body>
+</html>
